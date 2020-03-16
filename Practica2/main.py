@@ -91,9 +91,7 @@ def problemaSinRegularizar(X, Y):
     visualizacionDatos(X[:, 1:], Y, theta_opt, False, None)
 
 
-def problemaRegularizado (X,Y):
-
-    landa = 1
+def problemaRegularizado (X,Y, landa):
 
     poly = prep.PolynomialFeatures(6)
     XReg = poly.fit_transform(X)
@@ -118,8 +116,8 @@ def main():
 
 
     #problemaSinRegularizar(X,Y)
-
-    problemaRegularizado(X,Y)
+    landa = 1
+    problemaRegularizado(X, Y, landa)
 
 
 
