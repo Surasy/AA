@@ -15,29 +15,24 @@ capaFinal[1] -> Probabilidad de 2
 
 capaFinal[9] -> Probabilidad de 0
 """
-def comprobarProbabilidad(capaFinal, Y, posActual):
+def comprobarProbabilidad(capaFinal, Y):
 
-    contadorAciertos = 0
-    posx = np.argmax(capaFinal)
-
-    if posx + 1 == Y[posActual] :
-        contadorAciertos = 1
-
-    return contadorAciertos
+    posx = np.argmax(capaFinal, axis= 1)
+    Y = np.ravel(Y)
+    aciertos = np.sum(posx + 1 == Y)
+    
+    return aciertos/np.shape(capaFinal)[0]
 
 
 def tratamientoDeDatos(theta1, theta2, X, Y):
-    contadorAciertos = 0
     X = np.hstack([np.ones([np.shape(X)[0], 1]), X])
-    for i in range(np.shape(X)[0]):
-        capaIntermedia = sigmoide(np.dot(theta1, X[i]))
 
-        capaIntermedia = np.hstack([np.ones(1), capaIntermedia])
-        capaFinal = sigmoide(np.dot(theta2, capaIntermedia))
-        
-        contadorAciertos += comprobarProbabilidad(capaFinal, Y, i)
+    capaIntermedia = sigmoide(np.dot(X, np.transpose(theta1)))
 
-    print(contadorAciertos / np.shape(X)[0])
+    capaIntermedia = np.hstack([np.ones([np.shape(capaIntermedia)[0], 1]), capaIntermedia])
+    capaFinal = sigmoide(np.dot(capaIntermedia, np.transpose(theta2)))
+    
+    print(comprobarProbabilidad(capaFinal, Y))
 
     
 

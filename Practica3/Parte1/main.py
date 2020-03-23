@@ -57,20 +57,17 @@ def oneVsAll( X, y, num_etiquetas, reg):
   
     
 def calculoProbabilidad(X, Y, matrizThetas):
-    contadorAciertos = 0
+    aciertos = 0
 
-    for i in range(np.shape(X)[0]):
-        probabilidad = sigmoide(np.dot(matrizThetas, X[i]))
-        posx = np.where(probabilidad == np.amax(probabilidad))
-
-        if posx[0] + 1 == Y[i] :
-           contadorAciertos += 1
-
-    return contadorAciertos / np.shape(X)[0]
-       
     
+    probabilidad = sigmoide(np.dot(X, np.transpose(matrizThetas)))
+    posx = np.argmax(probabilidad, axis= 1)
 
+    Y = np.ravel(Y)
+    aciertos = np.sum(posx + 1 == Y)
 
+    return aciertos / np.shape(X)[0]
+       
 
 def main():
 
