@@ -1,6 +1,5 @@
 from scipy.io import loadmat
 import numpy as np
-import 
 
 
 def sigmoideDevivada(Z):
@@ -17,15 +16,13 @@ def calcularParteDer(Y, H):
 
 
 def funcionCoste(capaFinal, tamX, Y):
-    
     return np.sum(1 / tamX * (calcularParteIzq(Y, capaFinal) + calcularParteDer(Y, capaFinal)))
 
-def funcionCosteRegularizada(theta1, theta2,capaFinal, tamX, Y, landa):
-    return funcionCoste(capaFinal, tamX, Y) + ( landa/(2 * tamX) * (np.sum(theta1 ** 2) + np.sum(theta2 ** 2)))
+def funcionCosteRegularizada(theta1, theta2, capaFinal, tamX, Y, landa):
+    return funcionCoste(capaFinal, tamX, Y) + landa/(2 * tamX) * (np.sum(theta1[:, 1:] ** 2) + np.sum(theta2[:, 1:] ** 2))
 
 def  pesosAleatorios(L_ini, L_out):
     Eini = 0.12
-
     pesos = np.random.randint(low=-Eini *100, high=Eini*100 ,size=(L_out, L_ini + 1))
 
     return pesos/100
@@ -33,30 +30,34 @@ def  pesosAleatorios(L_ini, L_out):
 
 
 
+def backprop (params_rn , num_entradas, num_ocultas, num_etiquetas , X, y , reg):
+    theta1 = np.reshape(params_rn[:num_ocultas * (num_entradas + 1)], (num_ocultas, (num_entradas + 1)))
+    theta2 = np.reshape(params_rn[num_ocultas * (num_entradas + 1):], (num_etiquetas, (num_ocultas + 1)))
 
-def backprop (params_rn , num_entradas , num_ocultas , num_etiquetas , X, y , reg):
-    theta1 = np.reshape(params_rn[:num_ocultas, (num_entradas + 1)], (num_ocultas, (num_entradas + 1)))
-    theta2 = np.reshape(params_rn[num_ocultas, (num_entradas + 1):], (num_etiquetas, (num_ocultas + 1)))
-   
+    gradientePrimero = np.zeros(np.shape(theta1))
+    gradienteSegundo = np.zeros(np.shape(theta2))
+
     X = np.hstack([np.ones([np.shape(X)[0], 1]), X])
-    gradiente = 0
 
     z2 = sigmoide(np.dot(X, np.transpose(theta1)))
     a2 = np.hstack([np.ones([np.shape(z2)[0], 1]), z2])
     a3 = sigmoide(np.dot(a2, np.transpose(theta2)))
-    
-   
+
+    coste = funcionCosteRegularizada(theta1, theta2, a3, np.shape(X)[0], y, reg)
     for i in range (np.shape(X)[0]):
         deltaTres = a3[i] - y[i]
-        deltaDos = np.dot(np.transpose(theta2), deltaTres) * sigmoideDevivada(z2[i])
-        gradientePrimero = gradientePrimero + np.dot(deltaDos[1:],  X[i])
-        gradienteSegundo = gradienteSegundo + np.dot(deltaTres,  a2[i])
-   
-   
-    gradiente = (1/ np.shape(X)[0]) * (gradientePrimero+gradienteSegundo)
+        deltaDos = np.dot(np.transpose(theta2), deltaTres) * a2[i] * (1 - a2[i])
+        gradientePrimero = gradientePrimero + np.dot(deltaDos[1:, np.newaxis],  X[i][np.newaxis, :])
+        gradienteSegundo = gradienteSegundo + np.dot(deltaTres[:, np.newaxis],  a2[i][np.newaxis, :])
 
+    gradienteUno = (1/ np.shape(X)[0]) * gradientePrimero
+    gradienteDos = (1/ np.shape(X)[0]) * gradienteSegundo
 
-    #return coste, gradiente 
+    
+    print(coste)
+    gradiente = np.concatenate((np.ravel(gradienteUno),np.ravel(gradienteDos)))
+
+    return coste, gradiente 
 
 
 
@@ -80,15 +81,19 @@ def main():
     for i in range(m):
         y_onehot[i][y[i]] = 1
 
-    landa = 1
+    landa = 0   
 
-    theta1, theta2 = cargarDatos('data\ex4weights.mat')
+    #theta1, theta2 = cargarDatos('data\ex4weights.mat')
+    theta1, theta2 = pesosAleatorios(400, 25), pesosAleatorios(25, 10)
 
-    print(pesosAleatorios(2,4))
-    #print(funcionCosteRegularizada(theta1, theta2, X, y_onehot, landa))
+
+    params_rn = np.concatenate((np.ravel(theta1),np.ravel(theta2)))
+
+    print(checkNNGradients(backprop, landa))
+    #backprop(params_rn, 400, 25, 10, X, y_onehot, 1)
+    #print(pesosAleatorios(2,4))
     
     
-
 
 def debugInitializeWeights(fan_in, fan_out):
     """
@@ -173,9 +178,10 @@ def checkNNGradients(costNN, reg_param):
                       X, ys, reg_param)[0]
 
     numgrad = computeNumericalGradient(reduced_cost_func, nn_params)
-
+    
     # Check two gradients
     np.testing.assert_almost_equal(grad, numgrad)
+
     return (grad - numgrad)
 
 
