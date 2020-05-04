@@ -17,13 +17,16 @@ def costeSinReguralizar(Thetas, X, y):
 
     Thetas = Thetas.reshape(1,np.shape(X)[1])
 
+
     H = np.dot(X, np.transpose(Thetas))
    
     return 1/(2*m)*np.sum((H - y)**2)
 
 
 def costeRegularizado(Thetas, X, y, landa):
+    Thetas = Thetas.reshape(1,np.shape(X)[1])
     m = len(y)
+
     parteIzq = costeSinReguralizar(Thetas, X, y)
     parteDer = landa/(2*m)*np.sum(Thetas[:, 1:]**2)
     return  parteIzq + parteDer
@@ -32,6 +35,7 @@ def costeRegularizado(Thetas, X, y, landa):
 def gradienteRegularizada(Thetas, X, y, landa):
     m = len(y)
 
+    Thetas = Thetas.reshape(1,np.shape(X)[1])
     H = np.dot(X, np.transpose(Thetas))
 
     gradiente =  1/m*np.dot((H - y).T, X)
@@ -110,7 +114,7 @@ def dibujarRegresionLinealNormalizada(X, y, Thetas, mu, sigma, p):
     rango_uni = np.zeros((len(rango), 1))
     
     rango_uni[:, 0] = rango[:] 
-    #print(rango_uni)
+
 
     rango_norm = rango_uni
     for i in np.arange(2, p + 1):
@@ -120,15 +124,20 @@ def dibujarRegresionLinealNormalizada(X, y, Thetas, mu, sigma, p):
     rango_norm = (rango_norm - mu)/sigma
     rango_norm = np.hstack([np.ones([np.shape(rango_norm)[0], 1]), rango_norm])
     plt.plot(rango, np.dot(rango_norm, np.transpose(Thetas)))
-    print(np.shape(rango_norm), np.shape(Thetas))
+
 
     plt.show()
 
+def dibujarSeleccionDeParametro(errorTest, errorValidation):
+    ejex = [0, 0.001, 0.003, 0.01, 0.03, 0.1, 0.3, 1, 3, 10]
+    plt.figure()
+    plt.plot(ejex, errorTest)
+    plt.plot(ejex, errorValidation)
+    plt.show()
 
 def dibujarCurvasDeAprendizaje(errorTest, errorValidation): 
 
     plt.figure()
-
     plt.plot(np.arange(1, len(errorTest) + 1), errorTest)
     plt.plot(np.arange(1, len(errorValidation) + 1), errorValidation)
     plt.show()
@@ -183,19 +192,19 @@ def curvasDeAprendizajeNormalizada(X, y, Xval, yval, landa):
     Xval_norm = (Xval_norm - mu)/sigma
     Xval_norm = np.hstack([np.ones([np.shape(Xval_norm)[0], 1]), Xval_norm])
     
-    print(Xval_norm)
-    #print(np.shape(Xval_norm))
+
     Thetas = iniThetas(np.shape(X_norm))
     curvasDeAprendizaje(X_norm, y, Xval_norm, yval, Thetas, landa)
 
 
     
-def seleccionDeParametro(X, y, Xval, yval):
+def seleccionDeParametro(X, y, Xval, yval, Xtest, ytest):
     p = 8
 
     errorTest = []
     errorValidation = []
 
+    
     X_norm, mu, sigma = polinomizar(X, p)
     X_norm = np.hstack([np.ones([np.shape(X_norm)[0], 1]), X_norm])
 
@@ -210,12 +219,25 @@ def seleccionDeParametro(X, y, Xval, yval):
 
 
     Thetas = iniThetas(np.shape(X_norm))
+    print(optimiza(Thetas, X_norm, y, 100))
     for i in (0, 0.001, 0.003, 0.01, 0.03, 0.1, 0.3, 1, 3, 10):
         ThetasOpt = optimiza(Thetas, X_norm, y, i)
+
         errorTest.append(costeSinReguralizar(ThetasOpt, X_norm, y))
         errorValidation.append(costeSinReguralizar(ThetasOpt, Xval_norm, yval))
 
-    dibujarCurvasDeAprendizaje(errorTest, errorValidation)
+    dibujarSeleccionDeParametro(errorTest, errorValidation)
+
+    ThetasOpt = optimiza(Thetas, X_norm, y, 3)
+    Xtest_norm = Xtest
+    for i in np.arange(2, p + 1):
+        Xtest_norm = np.hstack((Xtest_norm, Xtest**i))
+
+    Xtest_norm = (Xtest_norm - mu)/sigma
+    Xtest_norm = np.hstack([np.ones([np.shape(Xtest_norm)[0], 1]), Xtest_norm])
+
+
+    print("Coste de xtest con landa 3: ", costeSinReguralizar(ThetasOpt, Xtest_norm, ytest))
 
 
 
@@ -229,7 +251,7 @@ def main():
 
     #regresionLinealNormalizada(X, y, landa)
     #curvasDeAprendizajeNormalizada(X, y, Xval, yval, landa)
-    seleccionDeParametro(X, y, Xval, yval)
+    seleccionDeParametro(X, y, Xval, yval, Xtest, ytest)
     """
     #Apartado 1 y 2
     Xval = np.hstack([np.ones([np.shape(Xval)[0], 1]), Xval])
