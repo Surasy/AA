@@ -31,6 +31,7 @@ def costeRegularizado(Thetas, X, y, landa):
     
 def gradienteRegularizada(Thetas, X, y, landa):
     m = len(y)
+
     H = np.dot(X, np.transpose(Thetas))
 
     gradiente =  1/m*np.dot((H - y).T, X)
@@ -47,7 +48,7 @@ def calculoCosteYGradiente(Thetas, X, y, landa):
 
 def optimiza(Thetas, X, y, landa):
     returned = opt.minimize(fun = calculoCosteYGradiente, x0 = Thetas, args = (X, y, landa), 
-        method='TNC', jac=True, options={'maxiter': 70})
+        method='L-BFGS-B', jac=True)
     return returned["x"]
 
 
@@ -71,9 +72,15 @@ def regresionLineal(Thetas, X, y, landa):
     ThetasOpt = optimiza(Thetas, X, y, landa)   
     dibujarRegresionLineal(X, y, ThetasOpt)
 
-def regresionLinealNormalizada(Thetas, X, y, landa, mu, sigma):
-    ThetasOpt = optimiza(Thetas, X, y, landa)   
-    dibujarRegresionLinealNormalizada(X, y, ThetasOpt, mu, sigma)
+def regresionLinealNormalizada(X, y, landa):
+    p = 8
+    X_norm, mu, sigma = polinomizar(X, p)
+    X_norm = np.hstack([np.ones([np.shape(X_norm)[0], 1]), X_norm])
+
+
+    Thetas = iniThetas(np.shape(X_norm))
+    ThetasOpt = optimiza(Thetas, X_norm, y, landa)   
+    dibujarRegresionLinealNormalizada(X, y, ThetasOpt, mu, sigma, p)
 
 def dibujarRegresionLineal(X, y, Thetas):
     plt.figure()
@@ -89,17 +96,32 @@ def dibujarRegresionLineal(X, y, Thetas):
 
     plt.show()
 
-def dibujarRegresionLinealNormalizada(X, y, Thetas, mu, sigma):
+def dibujarRegresionLinealNormalizada(X, y, Thetas, mu, sigma, p):
     plt.figure()
-    plt.scatter(X[:, 1], y, marker= 'x')
 
+    plt.scatter(X[:, 0], y, marker= 'x')
+    holgura = 5
 
-    minimo = np.amin(X[:, 1])
-    maximo = np.amax(X[:, 1])
+    minimo = np.amin(X[:, 0])
+    maximo = np.amax(X[:, 0])
+    maximo += holgura
+    minimo -= holgura
     rango = np.arange(minimo, maximo, 0.05)
-    #¿?¿?¿
-    plt.plot(rango, )
+    rango_uni = np.zeros((len(rango), 1))
     
+    rango_uni[:, 0] = rango[:] 
+    #print(rango_uni)
+
+    rango_norm = rango_uni
+    for i in np.arange(2, p + 1):
+        rango_norm = np.hstack((rango_norm, rango_uni**i))
+
+
+    rango_norm = (rango_norm - mu)/sigma
+    rango_norm = np.hstack([np.ones([np.shape(rango_norm)[0], 1]), rango_norm])
+    plt.plot(rango, np.dot(rango_norm, np.transpose(Thetas)))
+    print(np.shape(rango_norm), np.shape(Thetas))
+
     plt.show()
 
 
@@ -112,7 +134,6 @@ def dibujarCurvasDeAprendizaje(errorTest, errorValidation):
     plt.show()
 
 
-
 def inicializarDatos(archivo):
     valores = loadmat(archivo)
     X, y = valores['X'], valores['y']
@@ -122,7 +143,7 @@ def inicializarDatos(archivo):
     return X, y, Xval, yval, Xtest, ytest
 
 def iniThetas(shape):
-    Thetas = np.ones((1,shape[1])) #(1,2)
+    Thetas = np.zeros((1,shape[1])) #(1,2)
     #Thetas = np.ones(shape[1]) #(2,)
 
     return Thetas
@@ -147,19 +168,68 @@ def polinomizar(X, p):
     return normalizar(polin)
 
 
+def curvasDeAprendizajeNormalizada(X, y, Xval, yval, landa):
+    p = 8
+
+    X_norm, mu, sigma = polinomizar(X, p)
+    X_norm = np.hstack([np.ones([np.shape(X_norm)[0], 1]), X_norm])
+
+
+
+    Xval_norm = Xval
+    for i in np.arange(2, p + 1):
+        Xval_norm = np.hstack((Xval_norm, Xval**i))
+
+    Xval_norm = (Xval_norm - mu)/sigma
+    Xval_norm = np.hstack([np.ones([np.shape(Xval_norm)[0], 1]), Xval_norm])
+    
+    print(Xval_norm)
+    #print(np.shape(Xval_norm))
+    Thetas = iniThetas(np.shape(X_norm))
+    curvasDeAprendizaje(X_norm, y, Xval_norm, yval, Thetas, landa)
+
+
+    
+def seleccionDeParametro(X, y, Xval, yval):
+    p = 8
+
+    errorTest = []
+    errorValidation = []
+
+    X_norm, mu, sigma = polinomizar(X, p)
+    X_norm = np.hstack([np.ones([np.shape(X_norm)[0], 1]), X_norm])
+
+
+
+    Xval_norm = Xval
+    for i in np.arange(2, p + 1):
+        Xval_norm = np.hstack((Xval_norm, Xval**i))
+
+    Xval_norm = (Xval_norm - mu)/sigma
+    Xval_norm = np.hstack([np.ones([np.shape(Xval_norm)[0], 1]), Xval_norm])
+
+
+    Thetas = iniThetas(np.shape(X_norm))
+    for i in (0, 0.001, 0.003, 0.01, 0.03, 0.1, 0.3, 1, 3, 10):
+        ThetasOpt = optimiza(Thetas, X_norm, y, i)
+        errorTest.append(costeSinReguralizar(ThetasOpt, X_norm, y))
+        errorValidation.append(costeSinReguralizar(ThetasOpt, Xval_norm, yval))
+
+    dibujarCurvasDeAprendizaje(errorTest, errorValidation)
+
+
 
 def main():
     X, y, Xval, yval, Xtest, ytest = inicializarDatos('data\ex5data1.mat')
 
-    X_norm, mu, sigma = polinomizar(X, 2)
-    X_norm = np.hstack([np.ones([np.shape(X_norm)[0], 1]), X_norm])
+
+    #SOLO SIRVE PARA SIN NORMALIZAR Thetas = iniThetas(np.shape(X_norm))
+    landa = 100
 
 
-    Thetas = iniThetas(np.shape(X_norm))
-    landa = 0
-
-
-    regresionLinealNormalizada(Thetas, X_norm, y, landa, mu, sigma)
+    #regresionLinealNormalizada(X, y, landa)
+    #curvasDeAprendizajeNormalizada(X, y, Xval, yval, landa)
+    seleccionDeParametro(X, y, Xval, yval)
     """
     #Apartado 1 y 2
     Xval = np.hstack([np.ones([np.shape(Xval)[0], 1]), Xval])
@@ -175,11 +245,7 @@ def main():
     """
 
 
-"""
-opt.minimize utiliza para las operaciones thetas con shape (1,2) pero la theta
-optimizada devuelve un shape (2,). ¿?¿?¿?¿?¿?
 
-"""
 
 
 main()
