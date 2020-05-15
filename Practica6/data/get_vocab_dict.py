@@ -5,7 +5,7 @@ def getVocabDict(reverse=False):
     If "reverse", the keys and values are switched.
     """
     vocab_dict = {}
-    with open("vocab.txt") as f:
+    with open("data/vocab.txt") as f:
         for line in f:
             (val, key) = line.split()
             if not reverse:
