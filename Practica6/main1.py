@@ -10,7 +10,7 @@ def kernelLineal():
     X, y = inicializarBasicos("data/ex6data1.mat")
     #HACEMOS RAVEL PORQUE SI NO DA WARNING AL HACER EL FIT
     y = np.ravel(y)
-    svm = SVC( kernel='linear', C=100.0)
+    svm = SVC( kernel='linear', C=1)
     svm.fit(X, y)
     dibujarDatos(X, y, svm)
 
@@ -20,7 +20,6 @@ def inicializarBasicos(archivo):
 
     return X, y
     
-
 
 def dibujarDatos(X, y, svm):
     rangex = np.linspace(X[:, 0].min(), X[:, 0].max(), 100)
@@ -97,8 +96,11 @@ def eleccionDeParametros():
 
 
 def main():
+    #APARTADO 1.1 KERNEL LINEAL
     #kernelLineal()
+    #APARTADO 1.2 KERNEL GAUSSIANO
     #kernelGaussiano()
+    #APARTADO 1.3 ELECCION DE LOS PARAMETROS
     eleccionDeParametros()
     
 
