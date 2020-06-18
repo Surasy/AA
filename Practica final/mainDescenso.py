@@ -3,6 +3,7 @@ from sklearn import preprocessing as prep
 import math 
 import numpy as np
 import scipy.optimize as opt
+from matplotlib import pyplot as plt
 
 def sigmoide(Z):
     return 1 /(1 + np.e**(-Z))
@@ -32,9 +33,7 @@ def funcionGradienteRegularizado(Theta, X, Y, landa):
     return funcionGradiente(Theta, X, Y) + landa/(np.shape(X)[0])*Theta
 
 
-def problemaRegularizado(Xtrain, Ytrain, landa, pol):
-    poly = prep.PolynomialFeatures(pol)
-    Xtrain = poly.fit_transform(Xtrain)
+def problemaRegularizado(Xtrain, Ytrain, landa):
 
     Theta = np.zeros(np.shape(Xtrain)[1])
 
@@ -49,27 +48,52 @@ def numeroAciertos(ThetasOpt, Xval, Yval):
     H = H >= 0.5
     return np.sum(H == Yval)
 
+def dibujarSeleccionDeParametro(errorValidation, landas, polinomio):
+
+    plt.plot(landas, errorValidation, label= "Pol: " + str(polinomio))
+    plt.legend()
+    
 
 
-def eleccionOptimo(Xtrain, Ytrain, Xvallimpio, Yval, Xtest, Ytest):
+def eleccionOptimo(Xtrainlimpio, Ytrain, Xvallimpio, Yval, Xtest, Ytest):
     mejorAcierto = 0
     mejorPol = 0
 
     # Poner pol hasta 5 cuando acabemos
+    landas = [0, 1, 2, 3, 10]
+    plt.figure()
 
-    for pol in [1,2,3,4]:
+    for pol in [1,2,3,4,5]:
     #for pol in [5]:
-        for landa in [0, 0.3, 0.6, 1, 2, 3]:
+        errorValidation = []
+        
+        for landa in landas:
             print("Landa:", landa, " Pol:", pol)
             poly = prep.PolynomialFeatures(pol)
             Xval = poly.fit_transform(Xvallimpio)
-            ThetasOpt = problemaRegularizado(Xtrain, Ytrain, landa, pol)
+
+            poly = prep.PolynomialFeatures(pol)
+            Xtrain = poly.fit_transform(Xtrainlimpio)
+            
+
+
+            ThetasOpt = problemaRegularizado(Xtrain, Ytrain, landa)
             aciertosActuales = numeroAciertos(ThetasOpt, Xval, Yval)
+
+            errorValidation.append(aciertosActuales/ len(Xval)*100)
+
             if  aciertosActuales > mejorAcierto:
                 mejorLanda = landa
                 mejorPol = pol
                 ThetasMejor = ThetasOpt
                 mejorAcierto = aciertosActuales
+
+        dibujarSeleccionDeParametro(errorValidation, landas, pol)
+
+    plt.title("% aciertos para diferentes lamdas según su polinomio")
+    plt.xlabel("lamda")
+    plt.ylabel("% aciertos")
+    plt.show()
 
     poly = prep.PolynomialFeatures(mejorPol)
     Xtest = poly.fit_transform(Xtest)
@@ -84,7 +108,7 @@ def eleccionOptimo(Xtrain, Ytrain, Xvallimpio, Yval, Xtest, Ytest):
 def fraccionar(X, Y, porcentajeTrain, porcentajeVal, porcentajeTest):
 
     #total = len(X)
-    total = 50000
+    total = 10000
 
     indiceTrain = math.floor(total * porcentajeTrain/100)
     indiceVal = math.floor(total * porcentajeVal/100) + indiceTrain
@@ -139,6 +163,7 @@ def normalizarDadosDatos(X, mu, sigma):
         return X_norm
 
     return X
+
 
 def main():
 

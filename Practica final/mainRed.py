@@ -6,7 +6,7 @@ import math
 def fraccionar(X, Y, porcentajeTrain, porcentajeVal, porcentajeTest):
 
     #total = len(X)
-    total = 50000
+    total = 10000
 
     indiceTrain = math.floor(total * porcentajeTrain/100)
     indiceVal = math.floor(total * porcentajeVal/100) + indiceTrain
@@ -112,7 +112,7 @@ def normalizarDadosDatos(X, mu, sigma):
 
     return X
 
-def  pesosAleatorios(L_ini, L_out):
+def pesosAleatorios(L_ini, L_out):
     Eini = 0.12
 
     pesos = np.random.random((L_out, L_ini + 1))*(2*Eini)-Eini
@@ -144,22 +144,43 @@ def oneShootY(Y):
 
     return oneY
 
+def seleccionMejorLanda(params_rn, nodosEntrada, nodosOcultos, nodosSalida, Xtrain, Ytrain, Xval, Yval):
+    
+    mejorPorcentaje = 0
+    landas = [0, 1, 2, 3, 10]
+    
 
+    for landa in landas:
+        print("Trabajando con landa:", landa)
+        returned = opt.minimize(fun = backprop, x0 = params_rn, 
+            args = (nodosEntrada, nodosOcultos, nodosSalida, Xtrain, Ytrain, landa), method = 'TNC', jac = True, options = {'maxiter': 70})
+        
+        #PARA ESCOGER LAS MEJOR LANDA (NOS QUEDAMOS CON ESAS THETAS)
+
+        sol = comprobar(returned["x"], nodosEntrada, nodosOcultos, nodosSalida , Xval, Yval)
+        if sol > mejorPorcentaje:
+            mejorPorcentaje = sol
+            thetasOpt = returned["x"]
+            mejorLanda = landa
+        
+    #print(mejorPorcentaje, "con landa", mejorLanda)
+    return thetasOpt
 
 
 def main():
 
     nodosEntrada = 5
     nodosSalida = 2
-    nodosOcultos = 7 #??
-    landa = 1
+    nodosOcultos = 7
+
     
 
     Xtrain, Ytrain, Xval, Yval, Xtest, Ytest = lecturaDatos("data/random_data_1m.csv")
 
     Ytrain = oneShootY(Ytrain)
     Yval = oneShootY(Yval)
-    #TODO: FALTAN ONESHOOTEAR VAL Y TEST
+    Ytest = oneShootY(Ytest)
+
     Xtrain, mu, sigma = normalizar(Xtrain)
     Xval = normalizarDadosDatos(Xval, mu, sigma)
     Xtest = normalizarDadosDatos(Xtest, mu, sigma)
@@ -167,16 +188,11 @@ def main():
     theta1, theta2 = pesosAleatorios(nodosEntrada, nodosOcultos), pesosAleatorios(nodosOcultos, nodosSalida)
 
     params_rn = np.concatenate((np.ravel(theta1),np.ravel(theta2)))
-
-    returned = opt.minimize(fun = backprop, x0 = params_rn, 
-        args = (nodosEntrada, nodosOcultos, nodosSalida, Xtrain, Ytrain, landa), method = 'TNC', jac = True, options = {'maxiter': 70})
-    
-    #PARA ESCOGER LAS MEJOR LANDA (NOS QUEDAMOS CON ESAS THETAS)
-
-    sol = comprobar(returned["x"], nodosEntrada, nodosOcultos, nodosSalida , Xval, Yval)
-    print(sol * 100)
-
-
+    thetasOpt = seleccionMejorLanda(params_rn, nodosEntrada, nodosOcultos, nodosSalida, Xtrain, Ytrain, Xval, Yval)
+    porcentajeAciertos = comprobar(thetasOpt, nodosEntrada, nodosOcultos, nodosSalida , Xtest, Ytest)
+    print("Aciertos:", porcentajeAciertos * 100, "%")
    
+
+
 
 main()
