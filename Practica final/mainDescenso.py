@@ -1,4 +1,5 @@
 from pandas.io.parsers import read_csv
+import pandas as pd
 from sklearn import preprocessing as prep
 import math 
 import numpy as np
@@ -9,12 +10,10 @@ def sigmoide(Z):
     return 1 /(1 + np.e**(-Z))
 
 def calcularParteIzq(Y, H):
-
     return np.dot(np.log(H), Y)
 
 def calcularParteDer(Y, H):
     return np.dot(np.log(1 - H), (1 - Y))
-
 
 def funcionCoste(Theta, X, Y):
     H = sigmoide(np.dot(X, Theta))
@@ -34,7 +33,6 @@ def funcionGradienteRegularizado(Theta, X, Y, landa):
 
 
 def problemaRegularizado(Xtrain, Ytrain, landa):
-
     Theta = np.zeros(np.shape(Xtrain)[1])
 
     resultRegularizado = opt.fmin_tnc(func=funcionCosteRegularizado, x0 = Theta, 
@@ -49,7 +47,6 @@ def numeroAciertos(ThetasOpt, Xval, Yval):
     return np.sum(H == Yval)
 
 def dibujarSeleccionDeParametro(errorValidation, landas, polinomio):
-
     plt.plot(landas, errorValidation, label= "Pol: " + str(polinomio))
     plt.legend()
     
@@ -59,24 +56,17 @@ def eleccionOptimo(Xtrainlimpio, Ytrain, Xvallimpio, Yval, Xtest, Ytest):
     mejorAcierto = 0
     mejorPol = 0
 
-    # Poner pol hasta 5 cuando acabemos
-    landas = [0, 1, 2, 3, 10]
+    landas = [0, 1, 3, 6, 10]
     plt.figure()
-
     for pol in [1,2,3,4,5]:
-    #for pol in [5]:
         errorValidation = []
         
         for landa in landas:
             print("Landa:", landa, " Pol:", pol)
             poly = prep.PolynomialFeatures(pol)
             Xval = poly.fit_transform(Xvallimpio)
-
-            poly = prep.PolynomialFeatures(pol)
             Xtrain = poly.fit_transform(Xtrainlimpio)
-            
-
-
+        
             ThetasOpt = problemaRegularizado(Xtrain, Ytrain, landa)
             aciertosActuales = numeroAciertos(ThetasOpt, Xval, Yval)
 
@@ -102,13 +92,16 @@ def eleccionOptimo(Xtrainlimpio, Ytrain, Xvallimpio, Yval, Xtest, Ytest):
     print(aciertos)
     print(aciertos/len(Xval))
 
+    print(ThetasMejor)
 
+    datos = pd.DataFrame(data=ThetasMejor)
+    datos.to_csv("data/mejorDescenso.csv", index=False)
+    
 
 
 def fraccionar(X, Y, porcentajeTrain, porcentajeVal, porcentajeTest):
-
     #total = len(X)
-    total = 10000
+    total = 5000
 
     indiceTrain = math.floor(total * porcentajeTrain/100)
     indiceVal = math.floor(total * porcentajeVal/100) + indiceTrain
@@ -137,11 +130,9 @@ def carga_csv(file_name):
 def lecturaDatos(archivo):
     valores = carga_csv(archivo)
 
-    
     porcentajeTrain = 60
     porcentajeVal = 20
     porcentajeTest = 20
-    
     
     X = valores[:, 0:5]
     Y = valores[:, 5]
@@ -164,9 +155,14 @@ def normalizarDadosDatos(X, mu, sigma):
 
     return X
 
+def cargarThetas(file_name):
+    valores = read_csv(file_name, header=0).values
+    valores = np.ravel(valores)
+    return valores.astype(float)
+
 
 def main():
-
+    """
     Xtrain, Ytrain, Xval, Yval, Xtest, Ytest = lecturaDatos("data/random_data_1m.csv")
 
     Xtrain, mu, sigma = normalizar(Xtrain)
@@ -174,7 +170,10 @@ def main():
     Xtest = normalizarDadosDatos(Xtest, mu, sigma)
    
     eleccionOptimo(Xtrain, Ytrain, Xval, Yval, Xtest, Ytest)
-    #print(problemaRegularizado(Xtrain, Ytrain, 1, 1))
+    """
+    Thetas = cargarThetas("data/mejorDescenso.csv")
+    print(Thetas)
+
     
     
 

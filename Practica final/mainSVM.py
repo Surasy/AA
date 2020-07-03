@@ -18,7 +18,7 @@ def carga_csv(file_name):
 def fraccionar(X, Y, porcentajeTrain, porcentajeVal, porcentajeTest):
 
     #total = len(X)
-    total = 20000
+    total = 10000
 
     indiceTrain = math.floor(total * porcentajeTrain/100)
     indiceVal = math.floor(total * porcentajeVal/100) + indiceTrain
@@ -46,17 +46,8 @@ def lecturaDatos(archivo):
     Y = valores[:, 5]
     return fraccionar(X, Y, porcentajeTrain, porcentajeVal, porcentajeTest)
 
-def kernelGaussiano(X, y):
-    C = 1
-    sigma = 0.1
-    #HACEMOS RAVEL PORQUE SI NO DA WARNING AL HACER EL FIT
-    y = np.ravel(y)
-    svm = SVC( kernel='rbf', C=C, gamma = 1/(2 * sigma ** 2))
-    svm.fit(X, y)
-
 
 def eleccionDeParametros(Xtrain, Ytrain, Xval, Yval):
-    
     conjunto = [0.01, 0.03, 0.1, 0.3, 1, 3, 10, 30]
     
     #HACEMOS RAVEL PORQUE SI NO DA WARNING AL HACER EL FIT

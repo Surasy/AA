@@ -1,12 +1,13 @@
 from pandas.io.parsers import read_csv
 import scipy.optimize as opt
+import pandas as pd
 import numpy as np
 import math 
 
 def fraccionar(X, Y, porcentajeTrain, porcentajeVal, porcentajeTest):
 
     #total = len(X)
-    total = 10000
+    total = 5000
 
     indiceTrain = math.floor(total * porcentajeTrain/100)
     indiceVal = math.floor(total * porcentajeVal/100) + indiceTrain
@@ -34,7 +35,6 @@ def calcularParteDer(Y, H):
 
 def funcionCoste(capaFinal, tamX, Y):
     return np.sum(1 / tamX * (calcularParteIzq(Y, capaFinal) + calcularParteDer(Y, capaFinal)))
-
 
 def funcionCosteRegularizada(theta1, theta2, capaFinal, tamX, Y, landa):
     return funcionCoste(capaFinal, tamX, Y) + landa/(2 * tamX) * (np.sum(theta1[:, 1:] ** 2) + np.sum(theta2[:, 1:] ** 2))
@@ -68,15 +68,12 @@ def backprop (params_rn , num_entradas, num_ocultas, num_etiquetas , X, y , reg)
         gradientePrimero = gradientePrimero + np.dot(deltaDos[1:, np.newaxis],  X[i][np.newaxis, :])
         gradienteSegundo = gradienteSegundo + np.dot(deltaTres[:, np.newaxis],  a2[i][np.newaxis, :])
 
-    
     gradienteUno = 1/ np.shape(X)[0] * gradientePrimero
     gradienteDos = 1/ np.shape(X)[0] * gradienteSegundo  
-
 
     gradienteUno[:, 1:] = gradienteUno[:,1:] + reg/ np.shape(X)[0] * theta1[:, 1:]
     gradienteDos[:, 1:] = gradienteDos[:,1:] + reg/ np.shape(X)[0] * theta2[:, 1:]
     
-
     gradiente = np.concatenate((np.ravel(gradienteUno),np.ravel(gradienteDos)))
 
     return coste, gradiente 
@@ -134,6 +131,8 @@ def comprobar(params_rn , num_entradas, num_ocultas, num_etiquetas , X, y):
     return sol / np.shape(X)[0]
 
 def oneShootY(Y):
+    # W -> 1, 0
+    # L -> 0, 1
     oneY = np.zeros((len(Y), 2))
     posicionesWin = np.where(Y == 1)
 
@@ -145,18 +144,15 @@ def oneShootY(Y):
     return oneY
 
 def seleccionMejorLanda(params_rn, nodosEntrada, nodosOcultos, nodosSalida, Xtrain, Ytrain, Xval, Yval):
-    
     mejorPorcentaje = 0
-    landas = [0, 1, 2, 3, 10]
+    landas = [0, 1, 3, 6, 10]
     
-
     for landa in landas:
         print("Trabajando con landa:", landa)
         returned = opt.minimize(fun = backprop, x0 = params_rn, 
             args = (nodosEntrada, nodosOcultos, nodosSalida, Xtrain, Ytrain, landa), method = 'TNC', jac = True, options = {'maxiter': 70})
         
         #PARA ESCOGER LAS MEJOR LANDA (NOS QUEDAMOS CON ESAS THETAS)
-
         sol = comprobar(returned["x"], nodosEntrada, nodosOcultos, nodosSalida , Xval, Yval)
         if sol > mejorPorcentaje:
             mejorPorcentaje = sol
@@ -164,16 +160,29 @@ def seleccionMejorLanda(params_rn, nodosEntrada, nodosOcultos, nodosSalida, Xtra
             mejorLanda = landa
         
     #print(mejorPorcentaje, "con landa", mejorLanda)
+
+    #
+    theta1 = np.reshape(thetasOpt[:nodosOcultos * (nodosEntrada + 1)], (nodosOcultos, (nodosEntrada + 1)))
+    theta2 = np.reshape(thetasOpt[nodosOcultos * (nodosEntrada + 1):], (nodosSalida, (nodosOcultos + 1)))
+    print(theta1, theta2)
+    #
+
+    datos = pd.DataFrame(data=thetasOpt)
+    datos.to_csv("data/mejorRed.csv", index=False)
     return thetasOpt
 
 
-def main():
+def cargarThetas(file_name, num_entradas, num_ocultas, num_etiquetas):
+    valores = read_csv(file_name, header=0).values
+    valores = np.ravel(valores)
+    theta1 = np.reshape(valores[:num_ocultas * (num_entradas + 1)], (num_ocultas, (num_entradas + 1)))
+    theta2 = np.reshape(valores[num_ocultas * (num_entradas + 1):], (num_etiquetas, (num_ocultas + 1)))
+    return theta1, theta2
 
+def main():
     nodosEntrada = 5
     nodosSalida = 2
     nodosOcultos = 7
-
-    
 
     Xtrain, Ytrain, Xval, Yval, Xtest, Ytest = lecturaDatos("data/random_data_1m.csv")
 
@@ -188,11 +197,15 @@ def main():
     theta1, theta2 = pesosAleatorios(nodosEntrada, nodosOcultos), pesosAleatorios(nodosOcultos, nodosSalida)
 
     params_rn = np.concatenate((np.ravel(theta1),np.ravel(theta2)))
+
+
     thetasOpt = seleccionMejorLanda(params_rn, nodosEntrada, nodosOcultos, nodosSalida, Xtrain, Ytrain, Xval, Yval)
     porcentajeAciertos = comprobar(thetasOpt, nodosEntrada, nodosOcultos, nodosSalida , Xtest, Ytest)
     print("Aciertos:", porcentajeAciertos * 100, "%")
-   
-
+    #
+    Thetas1, Thetas2 = cargarThetas("data/mejorRed.csv", nodosEntrada, nodosOcultos, nodosSalida)
+    print(Thetas1, Thetas2)
+    #
 
 
 main()
