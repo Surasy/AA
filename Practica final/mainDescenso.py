@@ -90,18 +90,19 @@ def eleccionOptimo(Xtrainlimpio, Ytrain, Xvallimpio, Yval, Xtest, Ytest):
     aciertos = numeroAciertos(ThetasMejor, Xtest, Ytest)
     print("Mejor Landa:", mejorLanda, "Mejor Pol", mejorPol)
     print(aciertos)
-    print(aciertos/len(Xval))
+    print("Porcentaje de aciertos: " , aciertos/len(Xval)*100)
 
     print(ThetasMejor)
 
-    datos = pd.DataFrame(data=ThetasMejor)
-    datos.to_csv("data/mejorDescenso.csv", index=False)
+    #DESCOMENTAR PARA GUARDAR LAS TETHAS EN UN FICHERO CSV
+    #datos = pd.DataFrame(data=ThetasMejor)
+    #datos.to_csv("data/mejorDescenso2.csv", index=False)
     
 
 
 def fraccionar(X, Y, porcentajeTrain, porcentajeVal, porcentajeTest):
-    #total = len(X)
-    total = 5000
+    total = len(X)
+    #total = 1000000
 
     indiceTrain = math.floor(total * porcentajeTrain/100)
     indiceVal = math.floor(total * porcentajeVal/100) + indiceTrain
@@ -155,6 +156,8 @@ def normalizarDadosDatos(X, mu, sigma):
 
     return X
 
+
+#FUNCION PARA PODER CARGAR UNAS THETAS QUE TENGAMOS EN UN FICHERO CSV
 def cargarThetas(file_name):
     valores = read_csv(file_name, header=0).values
     valores = np.ravel(valores)
@@ -162,7 +165,7 @@ def cargarThetas(file_name):
 
 
 def main():
-    """
+    
     Xtrain, Ytrain, Xval, Yval, Xtest, Ytest = lecturaDatos("data/random_data_1m.csv")
 
     Xtrain, mu, sigma = normalizar(Xtrain)
@@ -170,10 +173,11 @@ def main():
     Xtest = normalizarDadosDatos(Xtest, mu, sigma)
    
     eleccionOptimo(Xtrain, Ytrain, Xval, Yval, Xtest, Ytest)
+    
     """
     Thetas = cargarThetas("data/mejorDescenso.csv")
     print(Thetas)
-
+    """
     
     
 
