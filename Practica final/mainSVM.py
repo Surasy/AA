@@ -17,8 +17,8 @@ def carga_csv(file_name):
 
 def fraccionar(X, Y, porcentajeTrain, porcentajeVal, porcentajeTest):
 
-    #total = len(X)
-    total = 1000000
+    total = len(X)
+    #total = 10000
 
     indiceTrain = math.floor(total * porcentajeTrain/100)
     indiceVal = math.floor(total * porcentajeVal/100) + indiceTrain
@@ -74,11 +74,13 @@ def eleccionDeParametros(Xtrain, Ytrain, Xval, Yval):
     
     return maxComparador
 
+
 def calcularAciertos(Xtest, Ytest, svm):
     Ycal = svm.predict(Xtest)
     aciertos = np.sum(Ytest == Ycal)
     
     print("Porcentaje de aciertos:" , aciertos/len(Ytest)*100)
+    
 
 def main():
     Xtrain, Ytrain, Xval, Yval, Xtest, Ytest = lecturaDatos("data/random_data_1m.csv")

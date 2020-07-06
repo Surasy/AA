@@ -6,8 +6,8 @@ import math
 
 def fraccionar(X, Y, porcentajeTrain, porcentajeVal, porcentajeTest):
 
-    #total = len(X)
-    total = 10000
+    total = len(X)
+    #total = 10000
 
     indiceTrain = math.floor(total * porcentajeTrain/100)
     indiceVal = math.floor(total * porcentajeVal/100) + indiceTrain
@@ -82,11 +82,9 @@ def backprop (params_rn , num_entradas, num_ocultas, num_etiquetas , X, y , reg)
 def lecturaDatos(archivo):
     valores = carga_csv(archivo)
 
-    
     porcentajeTrain = 60
     porcentajeVal = 20
     porcentajeTest = 20
-    
     
     X = valores[:, 0:5]
     Y = valores[:, 5]
@@ -115,6 +113,7 @@ def pesosAleatorios(L_ini, L_out):
     pesos = np.random.random((L_out, L_ini + 1))*(2*Eini)-Eini
     return pesos
 
+#SACA EL PORCENTAJE DE ACIERTOS QUE GENERAN LAS THETAS INTRODUCIDAS
 def comprobar(params_rn , num_entradas, num_ocultas, num_etiquetas , X, y):
     theta1 = np.reshape(params_rn[:num_ocultas * (num_entradas + 1)], (num_ocultas, (num_entradas + 1)))
     theta2 = np.reshape(params_rn[num_ocultas * (num_entradas + 1):], (num_etiquetas, (num_ocultas + 1)))
@@ -159,11 +158,9 @@ def seleccionMejorLanda(params_rn, nodosEntrada, nodosOcultos, nodosSalida, Xtra
             thetasOpt = returned["x"]
             mejorLanda = landa
         
-    #print(mejorPorcentaje, "con landa", mejorLanda)
-
-    #DESCOMENTAR PARA GUARDAR LAS TETHAS EN UN FICHERO CSV
-    #datos = pd.DataFrame(data=thetasOpt)
-    #datos.to_csv("data/mejorRed2.csv", index=False)
+    #PARA GUARDAR TETHAS OPTIMAS LAS TETHAS EN UN FICHERO CSV
+    datos = pd.DataFrame(data=thetasOpt)
+    datos.to_csv("data/mejorRed.csv", index=False)
     return thetasOpt
 
 #FUNCION PARA PODER CARGAR UNAS THETAS QUE TENGAMOS EN UN FICHERO CSV
@@ -193,10 +190,11 @@ def main():
 
     params_rn = np.concatenate((np.ravel(theta1),np.ravel(theta2)))
 
-
     thetasOpt = seleccionMejorLanda(params_rn, nodosEntrada, nodosOcultos, nodosSalida, Xtrain, Ytrain, Xval, Yval)
     porcentajeAciertos = comprobar(thetasOpt, nodosEntrada, nodosOcultos, nodosSalida , Xtest, Ytest)
     print("Aciertos:", porcentajeAciertos * 100, "%")
+
+    #Theta1, Theta2 = cargarThetas("data/mejorRed.csv", nodosEntrada, nodosOcultos, nodosSalida)
 
 
 

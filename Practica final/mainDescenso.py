@@ -23,14 +23,11 @@ def funcionGradiente(Theta, X, Y):
     H = sigmoide(np.dot(X, Theta))
     return 1 / np.shape(X)[0] * np.dot((H - Y), X)
 
-
 def funcionCosteRegularizado(Theta, X, Y, landa):
     return funcionCoste(Theta, X, Y) + landa/(2*np.shape(X)[0])*(Theta**2).sum()
 
-
 def funcionGradienteRegularizado(Theta, X, Y, landa):
     return funcionGradiente(Theta, X, Y) + landa/(np.shape(X)[0])*Theta
-
 
 def problemaRegularizado(Xtrain, Ytrain, landa):
     Theta = np.zeros(np.shape(Xtrain)[1])
@@ -95,14 +92,15 @@ def eleccionOptimo(Xtrainlimpio, Ytrain, Xvallimpio, Yval, Xtest, Ytest):
     print(ThetasMejor)
 
     #DESCOMENTAR PARA GUARDAR LAS TETHAS EN UN FICHERO CSV
-    #datos = pd.DataFrame(data=ThetasMejor)
-    #datos.to_csv("data/mejorDescenso2.csv", index=False)
+    guardarDatos(ThetasMejor, mejorPol)
+
+
     
 
 
 def fraccionar(X, Y, porcentajeTrain, porcentajeVal, porcentajeTest):
     total = len(X)
-    #total = 1000000
+    #total = 10000
 
     indiceTrain = math.floor(total * porcentajeTrain/100)
     indiceVal = math.floor(total * porcentajeVal/100) + indiceTrain
@@ -158,14 +156,24 @@ def normalizarDadosDatos(X, mu, sigma):
 
 
 #FUNCION PARA PODER CARGAR UNAS THETAS QUE TENGAMOS EN UN FICHERO CSV
-def cargarThetas(file_name):
-    valores = read_csv(file_name, header=0).values
+def cargarMejoresDatos(ficheroThetas, ficheroPol):
+    valores = read_csv(ficheroThetas, header=0).values
     valores = np.ravel(valores)
-    return valores.astype(float)
+    file1 = open(ficheroPol,"r") 
 
+    return valores.astype(float), int(file1.read())
 
-def main():
+#FUNCION PARA GUARDAR LAS THETAS Y POLINOMIO QUE MEJOR RESULTADOS HAN DADO
+def guardarDatos(ThetasMejor, mejorPol):
+    datos = pd.DataFrame(data=ThetasMejor)
+    datos.to_csv("data/mejorDescenso.csv", index=False)
+
+    file1 = open("data/mejorPolDescenso.txt","w") 
+    file1.write(str(mejorPol))
+    file1.close() 
+
     
+def main():
     Xtrain, Ytrain, Xval, Yval, Xtest, Ytest = lecturaDatos("data/random_data_1m.csv")
 
     Xtrain, mu, sigma = normalizar(Xtrain)
@@ -174,10 +182,11 @@ def main():
    
     eleccionOptimo(Xtrain, Ytrain, Xval, Yval, Xtest, Ytest)
     
-    """
-    Thetas = cargarThetas("data/mejorDescenso.csv")
-    print(Thetas)
-    """
+    
+    #Thetas, Pol = cargarMejoresDatos("data/mejorDescenso.csv", "data/mejorPolDescenso.txt")
+
+    
+    
     
     
 
